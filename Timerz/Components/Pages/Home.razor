@@ -1,0 +1,100 @@
+﻿@using System.Text.Json
+@using System.Diagnostics
+@page "/"
+
+
+<h1>Your Timerz</h1>
+<ul>
+    @if (Timerz.Count == 0)
+    {
+        <li>You haven't set a timer yet.</li>
+    }
+    else 
+    {
+        foreach (var timer in Timerz)
+        {
+            Debug.WriteLine(timer.isOn)
+        ;            
+            <li>@timer.Name
+                -> @timer.ClockTime
+                <MudButton @onclick="() => timer.Start()" disabled="@(timer.isOn)"><img src="css/Icones/play21px.jpg" /></MudButton>
+                <MudButton @onclick="() => timer.Stop()" disabled="@(!timer.isOn)"><img src="css/Icones/stop21px.jpg" /></MudButton>
+                <MudButton @onclick="() => DeleteTimer(timer)"><img src="css/Icones/delete21px.png" /></MudButton>
+            </li>
+        }
+    }
+</ul>
+
+<MudButton OnClick="AddTimer">Add a timer</MudButton>
+<MudTextField @bind-Value="NewTimerName" Label="Standard" Variant="Variant.Text"></MudTextField>
+@code 
+{
+    private string NewTimerName = "";
+    private Timer T = new();
+    private List<Timer> Timerz =new();
+    private TimersData timersData = new();
+    private void AddTimer()
+    {
+        var newTimer = new Timer();
+        newTimer.Time = DateTime.MinValue;
+        newTimer.Name = NewTimerName;
+        Timerz.Add(newTimer);
+        StateHasChanged();
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        LoadAllTimers();
+        // Periodically update the UI every second
+        while (true)
+        {
+            StateHasChanged();
+            await Task.Delay(1000);
+            SaveAllTimers();
+        }
+    }
+    private void SaveAllTimers()
+    {
+        string filePath = Path.Combine(FileSystem.AppDataDirectory, "Timers.json");
+
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+        timersData = new TimersData
+            {
+                Timerz = Timerz.Select(t => new TimerData
+                {
+                    Name = t.Name,
+                    Time = t.Time
+                }).ToList(),
+            };
+        string json = JsonSerializer.Serialize(timersData);
+        File.WriteAllText(filePath, json);
+    }
+    private void LoadAllTimers()
+    {
+        Debug.WriteLine("Load");
+        string filePath = Path.Combine(FileSystem.AppDataDirectory, "Timers.json");
+        Debug.WriteLine(filePath);
+        if (File.Exists(filePath))
+        {
+            string json = File.ReadAllText(filePath);
+            timersData = JsonSerializer.Deserialize<TimersData>(json);
+            if (timersData != null)
+            {
+                Timerz = timersData.Timerz.Select(timer => new Timer
+                    {
+                        Name = timer.Name,
+                        Time = timer.Time,
+                        isOn = false
+                    }).ToList();
+            }
+        }
+    }
+    private void DeleteTimer(Timer timer)
+    {
+        timer.Stop();
+        Timerz.Remove(timer);
+
+    }
+}
