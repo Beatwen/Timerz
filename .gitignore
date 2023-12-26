@@ -1,0 +1,27 @@
+# .gitignore
+
+# Ignore Visual Studio files
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.user
+*.vspscc
+*.dotCover
+.vs/
+
+# Ignore MAUI/Blazor build artifacts
+bin/
+obj/
+
+# Ignore NuGet packages
+packages/
+
+# Ignore MAUI/Blazor project-specific files
+*.userprefs
+*.user
+
+# Ignore MAUI/Blazor output directory
+_output/
